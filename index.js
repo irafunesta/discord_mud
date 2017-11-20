@@ -19,14 +19,56 @@ var db = new loki('./data/game.json', {
 });
 
 var characters = null;
+var zones = null;
+var commandList = null;
+var defaultZone = {
+	id: 0,
+	name: 'Spawn',
+	exits: [1,2]
+}
+
+function ZoneFactory(zoneOp) {
+	return Object.assign({}, zoneOp);
+}
 
 function databaseInitialize() {
 	characters = db.getCollection("characters");
+	zones = db.getCollection('zones');
+	commandList = db.getCollection('commandList');
+
 
 	if (characters === null) {
 		characters = db.addCollection("characters");
 	}
+	if(zones === null) {
+		zones = db.addCollection('zones');
+		zones.insert(defaultZone);
 
+		//Add two sample zones
+		var lastZoneId = zones.count();
+		zones.insert(ZoneFactory({
+			name:"Town",
+			id:lastZoneId,
+			exits: [0, 2]
+		}));
+		lastZoneId++;
+		zones.insert(ZoneFactory({
+			name:"Forest",
+			id:lastZoneId,
+			exits: [0, 1]
+		}));
+	}
+	if(commandList === null) {
+		commandList = db.addCollection('commandList');
+		commandList.insert({name:'help', desc:'Show this list'});
+		commandList.insert({name:'login', desc:'Create or login in a character'});
+		commandList.insert({name:'zone', desc:'Show the zone you are current in'});
+		commandList.insert({name:'who', desc:'Show the player in your current zone'});
+		commandList.insert({name:'exits', desc:'Show the zone connected to your current zone'});
+		commandList.insert({name:'move', desc:'Change to a close zone'});
+
+
+	}
 	// var userDoc = {
 	// 	username:'Simo',
 	// 	pswd:'asd',
@@ -49,6 +91,15 @@ function RandomRange(min = 0, max = 5)
 	return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
+function CreateMonster(monsterOp){
+	return Object.assing({}, {
+		name : 'Bat',
+		hp: 3,
+		str: 3,
+		def: 4
+	}, monsterOp);
+}
+
 function Run() {
 	var count = 0;
 	var monsters = ['snake', 'bat', 'large bat', 'infected rat'];
@@ -63,6 +114,7 @@ function Run() {
 	{
 		//Check if asking for the simo-bot
 		var arr = message.content.split(':');
+		var userid = message.author.id;
 		if(arr[0] == '!g')
 		{
 			switch(arr[1])
@@ -92,7 +144,7 @@ function Run() {
 				case 'login':
 					//Check if the user has a char or make a new one
 					//need to pass the name of the char
-					var userid = message.author.id;
+
 					var char = characters.findOne({user_id:userid});
 					if(char) {
 						//Greete the create character
@@ -103,7 +155,12 @@ function Run() {
 						var charName = arr[2];
 						characters.insert({
 							user_id: userid,
-							name:charName //TODO add other things
+							name:charName, //TODO add other things
+							zone: defaultZone.id,
+							status: 'online',
+							hp: '10',
+							str: '5',
+							def: '5'
 						});
 						message.channel.send("Welcome to the world " + charName +
 							' !. \n Type !g:help for a list of command. Have fun');
@@ -113,8 +170,121 @@ function Run() {
 						message.channel.send("The login command need a name as a parameter.");
 					}
 				break;
+				case 'zone':
+					//Tell the current zone the player is in
+					var char = characters.findOne({user_id:userid});
+					if(char) {
+
+						console.log(char);
+						var zone = zones.findOne({id:char.zone});
+						if(zone) {
+							console.log(zone);
+							message.channel.send("You are in " + zone.name);
+						}
+						else {
+							message.channel.send("Error no map whit id: " + char.zone);
+						}
+					}
+					else {
+						message.channel.send("You need to make a character to play");
+					}
+				break;
+				case 'who':
+					//Tell the current zone the player is in
+					var char = characters.findOne({user_id:userid});
+					var zone = zones.findOne({id:char.zone});
+					if(char) {
+						var charInzone = characters.find({
+							'zone': char.zone,
+							'user_id':{
+								'$ne':char.user_id
+							}
+						});
+
+						var msg = charInzone.length.toString() + ' player in ' + zone.name;
+						charInzone.forEach(function(item) {
+							msg += item.name + "\n";
+						});
+
+						if(msg !== null){
+							msg = "0 player in " + zone.name;
+						}
+						message.channel.send(msg);
+					}
+					else {
+						message.channel.send("You need to make a character to play");
+					}
+				break;
+				case 'exits':
+					//Tell the current zone the player is in
+					var char = characters.findOne({user_id:userid});
+					if(char) {
+						var zone = zones.findOne({id:char.zone});
+						var msg = '';
+						var exits = zone.exits;
+
+						exits.forEach(function(exit) {
+							var ce = zones.findOne({id:exit});
+							if(ce){
+								msg += exit +"-"+ ce.name + "\n";
+							}
+						});
+
+						if(msg === '') {
+							msg = "0 exits";
+						}
+						message.channel.send(msg);
+					}
+					else {
+						message.channel.send("You need to make a character to play");
+					}
+				break;
+				case 'move':
+					var char = characters.findOne({user_id:userid});
+					if(char) {
+						//Greete the create character
+						// message.channel.send("Welcome back to the world " + char.name);
+						if(arr[2]) {
+							//Move the char
+							var selectedZone = parseInt(arr[2]);
+							if(selectedZone === char.zone)
+							{
+								message.channel.send("You are already in this zone");
+							}
+							else {
+								var zone = zones.findOne({id:selectedZone});
+								if(zone) {
+									char.zone = selectedZone;
+									characters.update(char);
+									message.channel.send("You moved to " + zone.name);
+								}
+								else {
+									message.channel.send("Zone not found.");
+								}
+							}
+						}
+						else {
+							//Error need a name of the character
+							message.channel.send("The move command need a zone id as a parameter.");
+						}
+					}
+					else {
+						message.channel.send("You need to make a character to play");
+					}
+				break;
+
 				case 'help':
-					message.channel.send("Work in progress");
+					var msg = '';
+					var commands = commandList.find({});
+
+					console.log(commands);
+					if(commands){
+						commands.forEach(function(item) {
+							msg += item.name +": " + item.desc + "\n";
+						});
+
+						message.channel.send(msg);
+					}
 				break;
 				default:
 					message.channel.send("Wrong command type !g:help for a list of command.");
