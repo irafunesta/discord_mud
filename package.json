@@ -1,0 +1,20 @@
+{
+  "name": "discord_bot_ping",
+  "version": "1.0.0",
+  "description": "test for discord.js lib",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "test"
+  ],
+  "author": "Guidi Simone",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^11.2.1",
+    "nedb": "^1.8.0"
+  }
+}
