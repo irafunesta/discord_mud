@@ -5,6 +5,7 @@
 // Import the discord.js module
 const Discord = require('discord.js');
 const loki = require('lokijs');
+const messages = require('./messages.js');
 // Create an instance of a Discord client
 const client = new Discord.Client();
 // The token of your bot - https://discordapp.com/developers/applications/me
@@ -92,12 +93,34 @@ function RandomRange(min = 0, max = 5)
 }
 
 function CreateMonster(monsterOp){
-	return Object.assing({}, {
+	return Object.assign({}, {
 		name : 'Bat',
 		hp: 3,
 		str: 3,
 		def: 4
 	}, monsterOp);
+}
+
+function CreateCharacter(charOp) {
+	return Object.assign({}, {
+		user_id: '12312312',
+		name:'charName', //TODO make this unique
+		zone: defaultZone.id,
+		status: 'idle',
+		online: true,
+		lastMessageTime: '',
+		hp: '10',
+		str: '5',
+		def: '5'
+	}, charOp);
+}
+
+function GetCharacter(id)
+{
+	return characters.findOne({
+		user_id:id,
+		online:true
+	});
 }
 
 function Run() {
@@ -115,6 +138,8 @@ function Run() {
 		//Check if asking for the simo-bot
 		var arr = message.content.split(':');
 		var userid = message.author.id;
+		var char = GetCharacter(userid);
+
 		if(arr[0] == '!g')
 		{
 			switch(arr[1])
@@ -135,17 +160,14 @@ function Run() {
 				break;
 				case 'getChar':
 					//!g:createAccount:name:pswd:emal
-					var userid = message.author.id;
-					var char = characters.findOne({user_id:userid});
+					// var userid = message.author.id;
+					// var char = characters.findOne({user_id:userid});
 					console.log(JSON.stringify(char));
-
 					message.channel.send(JSON.stringify(char));
 				break;
 				case 'login':
 					//Check if the user has a char or make a new one
 					//need to pass the name of the char
-
-					var char = characters.findOne({user_id:userid});
 					if(char) {
 						//Greete the create character
 						message.channel.send("Welcome back to the world " + char.name);
@@ -153,17 +175,23 @@ function Run() {
 					else if(arr[2]) {
 						//Make new char
 						var charName = arr[2];
-						characters.insert({
-							user_id: userid,
-							name:charName, //TODO add other things
-							zone: defaultZone.id,
-							status: 'online',
-							hp: '10',
-							str: '5',
-							def: '5'
-						});
-						message.channel.send("Welcome to the world " + charName +
-							' !. \n Type !g:help for a list of command. Have fun');
+						var charWhitSameName = characters.find({name:charName});
+						if(charWhitSameName.length > 0)
+						{
+							//char names need to be unique
+							message.channel.send("The name " + charName +
+								'is already taken. \n Please use another name');
+						}
+						else {
+							characters.insert(CreateCharacter({
+								user_id: userid,
+								name:charName,
+								online: true
+							}));
+
+							message.channel.send("Welcome to the world " + charName +
+								' !. \n Type !g:help for a list of command. Have fun');
+						}
 					}
 					else {
 						//Error need a name of the character
@@ -172,7 +200,7 @@ function Run() {
 				break;
 				case 'zone':
 					//Tell the current zone the player is in
-					var char = characters.findOne({user_id:userid});
+					// var char = characters.findOne({user_id:userid});
 					if(char) {
 
 						console.log(char);
@@ -191,7 +219,7 @@ function Run() {
 				break;
 				case 'who':
 					//Tell the current zone the player is in
-					var char = characters.findOne({user_id:userid});
+					// var char = characters.findOne({user_id:userid});
 					var zone = zones.findOne({id:char.zone});
 					if(char) {
 						var charInzone = characters.find({
@@ -217,7 +245,7 @@ function Run() {
 				break;
 				case 'exits':
 					//Tell the current zone the player is in
-					var char = characters.findOne({user_id:userid});
+					// var char = characters.findOne({user_id:userid});
 					if(char) {
 						var zone = zones.findOne({id:char.zone});
 						var msg = '';
@@ -240,7 +268,7 @@ function Run() {
 					}
 				break;
 				case 'move':
-					var char = characters.findOne({user_id:userid});
+					// var char = characters.findOne({user_id:userid});
 					if(char) {
 						//Greete the create character
 						// message.channel.send("Welcome back to the world " + char.name);
