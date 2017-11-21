@@ -22,11 +22,16 @@ var db = new loki('./data/game.json', {
 var characters = null;
 var zones = null;
 var commandList = null;
+
 var defaultZone = {
 	id: 0,
 	name: 'Spawn',
 	exits: [1,2]
 }
+
+var swipeAfkUserId = 0;
+var swipeInterval = 10;
+var maxIdleTime = 30;
 
 function ZoneFactory(zoneOp) {
 	return Object.assign({}, zoneOp);
@@ -115,12 +120,41 @@ function CreateCharacter(charOp) {
 	}, charOp);
 }
 
-function GetCharacter(id)
+function GetCharacter(id, _online = false)
 {
 	return characters.findOne({
 		user_id:id,
-		online:true
+		online:_online
 	});
+}
+
+function GetAllCharacter(id)
+{
+	return characters.findOne({
+		user_id:id
+	});
+}
+
+function AfkSwipe()
+{
+	console.log("Start Afk swipe");
+	var allChar = characters.find({online: true});
+
+	for(var i in allChar) {
+		var currentChar = allChar[i];
+		var timeSinceLastMessage = currentChar.lastMessageTime - currentChar.prevMessageTime;
+
+		console.log(currentChar.name, '- timeSinceLastMessage:', timeSinceLastMessage);
+
+		if(timeSinceLastMessage > maxIdleTime * 1000)
+		{
+			//the user is logged out
+			currentChar.online = false;
+			console.log(currentChar.name, 'logged off');
+			characters.update(currentChar);
+		}
+		// allCharacters[i].prevMessageTime = 3;
+	}
 }
 
 function Run() {
@@ -131,9 +165,11 @@ function Run() {
 	// from Discord _after_ ready is emitted
 	client.on('ready', () => {
 	  console.log('I am ready!');
-	  console.log(msgUtils.getMessage("WELCOME_BACK", ['Pino']));
-	  console.log(msgUtils.getMessage("TEST", ['Pino', '1']));
+	  // console.log(msgUtils.getMessage("WELCOME_BACK", ['Pino']));
+	  // console.log(msgUtils.getMessage("TEST", ['Pino', '1']));
 
+	  //Create a step for loggin off the user that don't play for a certain time
+	  // swipeAfkUserId = setInterval(AfkSwipe, swipeInterval * 1000);
 	});
 
 	function ParseMessage(message)
@@ -141,10 +177,27 @@ function Run() {
 		//Check if asking for the simo-bot
 		var arr = message.content.split(':');
 		var userid = message.author.id;
-		var char = GetCharacter(userid);
 
 		if(arr[0] == '!g')
 		{
+			var char = GetAllCharacter(userid);	//Get the character only if the bot is interpelled
+			console.log("char:", char);
+			//Update the char whit is last message
+			if(char && char.online == true) {
+				if(char.prevMessageTime === 3)
+				{
+					//First time messages
+					char.prevMessageTime = message.createdTimestamp;
+				}
+				else {
+					char.prevMessageTime = char.lastMessageTime;
+				}
+
+				char.lastMessageTime = message.createdTimestamp;
+				characters.update(char);
+				// console.log(char.prevMessageTime);
+			}
+
 			switch(arr[1])
 			{
 				case 'ping':
@@ -174,7 +227,9 @@ function Run() {
 					if(char) {
 						//Greete the create character
 						// message.channel.send("Welcome back to the world " + char.name);
-						message.channel.send(messages.getMessage("WELCOME_BACK", [char.name]));
+						message.channel.send(msgUtils.getMessage("WELCOME_BACK", [char.name]));
+						char.online = true;
+						characters.update(char);
 					}
 					else if(arr[2]) {
 						//Make new char
@@ -190,12 +245,14 @@ function Run() {
 							characters.insert(CreateCharacter({
 								user_id: userid,
 								name:charName,
-								online: true
+								online: true,
+								lastMessageTime: message.createdTimestamp,
+								prevMessageTime: 3
 							}));
 
 							// message.channel.send("Welcome to the world " + charName +
 							// 	' !. \n Type !g:help for a list of command. Have fun');
-							message.channel.send(messages.getMessage("WELCOME_NEW", [charName]));
+							message.channel.send(msgUtils.getMessage("WELCOME_NEW", [charName]));
 						}
 					}
 					else {
@@ -226,20 +283,20 @@ function Run() {
 					//Tell the current zone the player is in
 					// var char = characters.findOne({user_id:userid});
 					var zone = zones.findOne({id:char.zone});
-					if(char) {
+					if(char && char.online == true) {
 						var charInzone = characters.find({
-							'zone': char.zone,
-							'user_id':{
-								'$ne':char.user_id
-							}
+							'zone': char.zone
+							// 'user_id':{
+							// 	'$ne':char.user_id
+							// }
 						});
 
-						var msg = charInzone.length.toString() + ' player in ' + zone.name;
+						var msg = charInzone.length.toString() + ' player in ' + zone.name + "\n";
 						charInzone.forEach(function(item) {
 							msg += item.name + "\n";
 						});
 
-						if(msg !== null){
+						if(msg === null) {
 							msg = "0 player in " + zone.name;
 						}
 						message.channel.send(msg);
@@ -251,7 +308,7 @@ function Run() {
 				case 'exits':
 					//Tell the current zone the player is in
 					// var char = characters.findOne({user_id:userid});
-					if(char) {
+					if(char && char.online == true) {
 						var zone = zones.findOne({id:char.zone});
 						var msg = '';
 						var exits = zone.exits;
@@ -274,7 +331,7 @@ function Run() {
 				break;
 				case 'move':
 					// var char = characters.findOne({user_id:userid});
-					if(char) {
+					if(char && char.online == true) {
 						//Greete the create character
 						// message.channel.send("Welcome back to the world " + char.name);
 						if(arr[2]) {
@@ -317,6 +374,21 @@ function Run() {
 						});
 
 						message.channel.send(msg);
+					}
+				break;
+				case 'createZone':
+					if(arr[2]) {
+						var zoneName = arr[2];
+						var lstZone = zones.count();
+
+						zones.insert({
+							id: lstZone,
+							name: zoneName
+						});
+
+					}
+					else {
+						message.channel.send("The createZone command need a zone name as a parameter.");
 					}
 				break;
 				default:
