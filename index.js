@@ -5,7 +5,7 @@
 // Import the discord.js module
 const Discord = require('discord.js');
 const loki = require('lokijs');
-const messages = require('./messages.js');
+var msgUtils = require('./messages.js');
 // Create an instance of a Discord client
 const client = new Discord.Client();
 // The token of your bot - https://discordapp.com/developers/applications/me
@@ -131,6 +131,9 @@ function Run() {
 	// from Discord _after_ ready is emitted
 	client.on('ready', () => {
 	  console.log('I am ready!');
+	  console.log(msgUtils.getMessage("WELCOME_BACK", ['Pino']));
+	  console.log(msgUtils.getMessage("TEST", ['Pino', '1']));
+
 	});
 
 	function ParseMessage(message)
@@ -170,7 +173,8 @@ function Run() {
 					//need to pass the name of the char
 					if(char) {
 						//Greete the create character
-						message.channel.send("Welcome back to the world " + char.name);
+						// message.channel.send("Welcome back to the world " + char.name);
+						message.channel.send(messages.getMessage("WELCOME_BACK", [char.name]));
 					}
 					else if(arr[2]) {
 						//Make new char
@@ -189,8 +193,9 @@ function Run() {
 								online: true
 							}));
 
-							message.channel.send("Welcome to the world " + charName +
-								' !. \n Type !g:help for a list of command. Have fun');
+							// message.channel.send("Welcome to the world " + charName +
+							// 	' !. \n Type !g:help for a list of command. Have fun');
+							message.channel.send(messages.getMessage("WELCOME_NEW", [charName]));
 						}
 					}
 					else {
