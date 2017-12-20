@@ -6,6 +6,9 @@
 const Discord = require('discord.js');
 const loki = require('lokijs');
 const config = require('./config.js');
+const ytdl = require('ytdl-core');
+const streamOptions = { seek: 0, volume: 0.5 };
+
 var msgUtils = require('./messages.js');
 // Create an instance of a Discord client
 const client = new Discord.Client();
@@ -165,237 +168,260 @@ function Run() {
 	// The ready event is vital, it means that your bot will only start reacting to information
 	// from Discord _after_ ready is emitted
 	client.on('ready', () => {
-	  console.log('I am ready!');
-	  // console.log(msgUtils.getMessage("WELCOME_BACK", ['Pino']));
-	  // console.log(msgUtils.getMessage("TEST", ['Pino', '1']));
+	  console.log('I am ready!', Date.now().toString());
 
-	  //Create a step for loggin off the user that don't play for a certain time
-	  // swipeAfkUserId = setInterval(AfkSwipe, swipeInterval * 1000);
 	});
 
 	function ParseMessage(message)
 	{
-		//Check if asking for the simo-bot
-		var arr = message.content.split(':');
-		var userid = message.author.id;
-
-		if(arr[0] == '!g')
+		try
 		{
-			var char = GetAllCharacter(userid);	//Get the character only if the bot is interpelled
-			console.log("char:", char);
-			//Update the char whit is last message
-			if(char && char.online == true) {
-				if(char.prevMessageTime === 3)
-				{
-					//First time messages
-					char.prevMessageTime = message.createdTimestamp;
-				}
-				else {
-					char.prevMessageTime = char.lastMessageTime;
-				}
+			//Check if asking for the simo-bot
+			var arr = message.content.split(':');
+			var userid = message.author.id;
 
-				char.lastMessageTime = message.createdTimestamp;
-				characters.update(char);
-				// console.log(char.prevMessageTime);
-			}
-
-			switch(arr[1])
+			if(arr[0] == '!g')
 			{
-				case 'ping':
-					message.channel.send('pong');
-				break;
-				case 'rand':
-					message.channel.send('your number is :' + RandomRange(2, 3));
-				break;
-				case 'f':
-					message.channel.send('you will fight :' + GetMonster());
-				break;
-				case 'name':
-					var res = db.getCollection("accounts").find({});
-					console.log(res);
-					message.channel.send('res:' + JSON.stringify(res));
-				break;
-				case 'getChar':
-					//!g:createAccount:name:pswd:emal
-					// var userid = message.author.id;
-					// var char = characters.findOne({user_id:userid});
-					console.log(JSON.stringify(char));
-					message.channel.send(JSON.stringify(char));
-				break;
-				case 'login':
-					//Check if the user has a char or make a new one
-					//need to pass the name of the char
-					if(char) {
-						//Greete the create character
-						// message.channel.send("Welcome back to the world " + char.name);
-						message.channel.send(msgUtils.getMessage("WELCOME_BACK", [char.name]));
-						char.online = true;
-						characters.update(char);
-					}
-					else if(arr[2]) {
-						//Make new char
-						var charName = arr[2];
-						var charWhitSameName = characters.find({name:charName});
-						if(charWhitSameName.length > 0)
-						{
-							//char names need to be unique
-							message.channel.send("The name " + charName +
-								'is already taken. \n Please use another name');
-						}
-						else {
-							characters.insert(CreateCharacter({
-								user_id: userid,
-								name:charName,
-								online: true,
-								lastMessageTime: message.createdTimestamp,
-								prevMessageTime: 3
-							}));
-
-							// message.channel.send("Welcome to the world " + charName +
-							// 	' !. \n Type !g:help for a list of command. Have fun');
-							message.channel.send(msgUtils.getMessage("WELCOME_NEW", [charName]));
-						}
+				var char = GetAllCharacter(userid);	//Get the character only if the bot is interpelled
+				console.log("char:", char);
+				//Update the char whit is last message
+				if(char && char.online == true) {
+					if(char.prevMessageTime === 3)
+					{
+						//First time messages
+						char.prevMessageTime = message.createdTimestamp;
 					}
 					else {
-						//Error need a name of the character
-						message.channel.send("The login command need a name as a parameter.");
+						char.prevMessageTime = char.lastMessageTime;
 					}
-				break;
-				case 'zone':
-					//Tell the current zone the player is in
-					// var char = characters.findOne({user_id:userid});
-					if(char) {
 
-						console.log(char);
-						var zone = zones.findOne({id:char.zone});
-						if(zone) {
-							console.log(zone);
-							message.channel.send("You are in " + zone.name);
+					char.lastMessageTime = message.createdTimestamp;
+					characters.update(char);
+					// console.log(char.prevMessageTime);
+				}
+
+				switch(arr[1])
+				{
+					case 'ping':
+						message.channel.send('pong');
+					break;
+					case 'rand':
+						message.channel.send('your number is :' + RandomRange(2, 3));
+					break;
+					case 'f':
+						message.channel.send('you will fight :' + GetMonster());
+					break;
+					case 'name':
+						var res = db.getCollection("accounts").find({});
+						console.log(res);
+						message.channel.send('res:' + JSON.stringify(res));
+					break;
+					case 'getChar':
+						//!g:createAccount:name:pswd:emal
+						// var userid = message.author.id;
+						// var char = characters.findOne({user_id:userid});
+						console.log(JSON.stringify(char));
+						message.channel.send(JSON.stringify(char));
+					break;
+					case 'login':
+						//Check if the user has a char or make a new one
+						//need to pass the name of the char
+						if(char) {
+							//Greete the create character
+							// message.channel.send("Welcome back to the world " + char.name);
+							message.channel.send(msgUtils.getMessage("WELCOME_BACK", [char.name]));
+							char.online = true;
+							characters.update(char);
 						}
-						else {
-							message.channel.send("Error no map whit id: " + char.zone);
-						}
-					}
-					else {
-						message.channel.send("You need to make a character to play");
-					}
-				break;
-				case 'who':
-					//Tell the current zone the player is in
-					// var char = characters.findOne({user_id:userid});
-					var zone = zones.findOne({id:char.zone});
-					if(char && char.online == true) {
-						var charInzone = characters.find({
-							'zone': char.zone
-							// 'user_id':{
-							// 	'$ne':char.user_id
-							// }
-						});
-
-						var msg = charInzone.length.toString() + ' player in ' + zone.name + "\n";
-						charInzone.forEach(function(item) {
-							msg += item.name + "\n";
-						});
-
-						if(msg === null) {
-							msg = "0 player in " + zone.name;
-						}
-						message.channel.send(msg);
-					}
-					else {
-						message.channel.send("You need to make a character to play");
-					}
-				break;
-				case 'exits':
-					//Tell the current zone the player is in
-					// var char = characters.findOne({user_id:userid});
-					if(char && char.online == true) {
-						var zone = zones.findOne({id:char.zone});
-						var msg = '';
-						var exits = zone.exits;
-
-						exits.forEach(function(exit) {
-							var ce = zones.findOne({id:exit});
-							if(ce){
-								msg += exit +"-"+ ce.name + "\n";
-							}
-						});
-
-						if(msg === '') {
-							msg = "0 exits";
-						}
-						message.channel.send(msg);
-					}
-					else {
-						message.channel.send("You need to make a character to play");
-					}
-				break;
-				case 'move':
-					// var char = characters.findOne({user_id:userid});
-					if(char && char.online == true) {
-						//Greete the create character
-						// message.channel.send("Welcome back to the world " + char.name);
-						if(arr[2]) {
-							//Move the char
-							var selectedZone = parseInt(arr[2]);
-							if(selectedZone === char.zone)
+						else if(arr[2]) {
+							//Make new char
+							var charName = arr[2];
+							var charWhitSameName = characters.find({name:charName});
+							if(charWhitSameName.length > 0)
 							{
-								message.channel.send("You are already in this zone");
+								//char names need to be unique
+								message.channel.send("The name " + charName +
+									'is already taken. \n Please use another name');
 							}
 							else {
-								var zone = zones.findOne({id:selectedZone});
-								if(zone) {
-									char.zone = selectedZone;
-									characters.update(char);
-									message.channel.send("You moved to " + zone.name);
-								}
-								else {
-									message.channel.send("Zone not found.");
-								}
+								characters.insert(CreateCharacter({
+									user_id: userid,
+									name:charName,
+									online: true,
+									lastMessageTime: message.createdTimestamp,
+									prevMessageTime: 3
+								}));
+
+								// message.channel.send("Welcome to the world " + charName +
+								// 	' !. \n Type !g:help for a list of command. Have fun');
+								message.channel.send(msgUtils.getMessage("WELCOME_NEW", [charName]));
 							}
 						}
 						else {
 							//Error need a name of the character
-							message.channel.send("The move command need a zone id as a parameter.");
+							message.channel.send("The login command need a name as a parameter.");
 						}
-					}
-					else {
-						message.channel.send("You need to make a character to play");
-					}
-				break;
+					break;
+					case 'zone':
+						//Tell the current zone the player is in
+						// var char = characters.findOne({user_id:userid});
+						if(char) {
 
-				case 'help':
-					var msg = '';
-					var commands = commandList.find({});
+							console.log(char);
+							var zone = zones.findOne({id:char.zone});
+							if(zone) {
+								console.log(zone);
+								message.channel.send("You are in " + zone.name);
+							}
+							else {
+								message.channel.send("Error no map whit id: " + char.zone);
+							}
+						}
+						else {
+							message.channel.send("You need to make a character to play");
+						}
+					break;
+					case 'who':
+						//Tell the current zone the player is in
+						// var char = characters.findOne({user_id:userid});
+						var zone = zones.findOne({id:char.zone});
+						if(char && char.online == true) {
+							var charInzone = characters.find({
+								'zone': char.zone
+								// 'user_id':{
+								// 	'$ne':char.user_id
+								// }
+							});
 
-					console.log("commands:" + commands);
-					if(commands){
-						commands.forEach(function(item) {
-							msg += item.name +": " + item.desc + "\n";
-						});
+							var msg = charInzone.length.toString() + ' player in ' + zone.name + "\n";
+							charInzone.forEach(function(item) {
+								msg += item.name + "\n";
+							});
 
-						message.channel.send(msg);
-					}
-				break;
-				case 'createZone':
-					if(arr[2]) {
-						var zoneName = arr[2];
-						var lstZone = zones.count();
+							if(msg === null) {
+								msg = "0 player in " + zone.name;
+							}
+							message.channel.send(msg);
+						}
+						else {
+							message.channel.send("You need to make a character to play");
+						}
+					break;
+					case 'exits':
+						//Tell the current zone the player is in
+						// var char = characters.findOne({user_id:userid});
+						if(char && char.online == true) {
+							var zone = zones.findOne({id:char.zone});
+							var msg = '';
+							var exits = zone.exits;
 
-						zones.insert({
-							id: lstZone,
-							name: zoneName
-						});
+							exits.forEach(function(exit) {
+								var ce = zones.findOne({id:exit});
+								if(ce){
+									msg += exit +"-"+ ce.name + "\n";
+								}
+							});
 
-					}
-					else {
-						message.channel.send("The createZone command need a zone name as a parameter.");
-					}
-				break;
-				default:
-					message.channel.send("Wrong command type !g:help for a list of command.");
-				break;
+							if(msg === '') {
+								msg = "0 exits";
+							}
+							message.channel.send(msg);
+						}
+						else {
+							message.channel.send("You need to make a character to play");
+						}
+					break;
+					case 'move':
+						// var char = characters.findOne({user_id:userid});
+						if(char && char.online == true) {
+							//Greete the create character
+							// message.channel.send("Welcome back to the world " + char.name);
+							if(arr[2]) {
+								//Move the char
+								var selectedZone = parseInt(arr[2]);
+								if(selectedZone === char.zone)
+								{
+									message.channel.send("You are already in this zone");
+								}
+								else {
+									var zone = zones.findOne({id:selectedZone});
+									if(zone) {
+										char.zone = selectedZone;
+										characters.update(char);
+										message.channel.send("You moved to " + zone.name);
+									}
+									else {
+										message.channel.send("Zone not found.");
+									}
+								}
+							}
+							else {
+								//Error need a name of the character
+								message.channel.send("The move command need a zone id as a parameter.");
+							}
+						}
+						else {
+							message.channel.send("You need to make a character to play");
+						}
+					break;
+
+					case 'help':
+						var msg = '';
+						var commands = commandList.find({});
+
+						console.log("commands:" + commands);
+						if(commands){
+							commands.forEach(function(item) {
+								msg += item.name +": " + item.desc + "\n";
+							});
+
+							message.channel.send(msg);
+						}
+					break;
+					case 'createZone':
+						if(arr[2]) {
+							var zoneName = arr[2];
+							var lstZone = zones.count();
+
+							zones.insert({
+								id: lstZone,
+								name: zoneName
+							});
+
+						}
+						else {
+							message.channel.send("The createZone command need a zone name as a parameter.");
+						}
+					break;
+					case 'music':
+						if (!message.guild) return;
+
+						// Only try to join the sender's voice channel if they are in one themselves
+						if (message.member.voiceChannel)
+						{
+						  message.member.voiceChannel.join()
+						    .then(connection => { // Connection is an instance of VoiceConnection
+						      message.reply('I have successfully connected to the channel!');
+
+							  const stream = ytdl('https://www.youtube.com/watch?v=XAWgeLF9EVQ', { filter : 'audioonly' });
+    			  			  const dispatcher = connection.playStream(stream, streamOptions);
+						    })
+						    .catch(console.log);
+						}
+						else
+						{
+						  message.reply('You need to join a voice channel first!');
+						}
+					break;
+					default:
+						message.channel.send("Wrong command type !g:help for a list of command.");
+					break;
+				}
 			}
+		}
+		catch(err)
+		{
+			console.log("Error parsing msg:", err);
 		}
 	}
 
@@ -406,6 +432,15 @@ function Run() {
 
 	client.on('error', err =>{
 		console.log("An error occurred", err);
+	});
+
+	client.on('guildMemberAdd', member => {
+	  // Send the message to a designated channel on a server:
+	  const channel = member.guild.channels.find('name', 'member-log');
+	  // Do nothing if the channel wasn't found on this server
+	  if (!channel) return;
+	  // Send the message, mentioning the member
+	  channel.send(`Welcome to the server, ${member}`);
 	});
 
 	// Log our bot in

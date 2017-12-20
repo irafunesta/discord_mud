@@ -7,7 +7,7 @@
     "node": "6.9.1"
   },
   "scripts": {
-	"start": "node index.js",
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack -w"
   },
@@ -19,10 +19,16 @@
   "author": "Guidi Simone",
   "license": "ISC",
   "dependencies": {
+    "bufferutil": "^3.0.2",
     "discord.js": "^11.2.1",
+    "erlpack": "github:hammerandchisel/erlpack",
+    "ffmpeg-binaries": "^3.2.2-3",
     "fs": "0.0.1-security",
     "lokijs": "^1.5.1",
     "nedb": "^1.8.0",
-    "webpack": "^3.9.1"
+    "node-gyp": "^3.6.2",
+    "opusscript": "0.0.6",
+    "webpack": "^3.9.1",
+    "ytdl-core": "^0.18.4"
   }
 }
