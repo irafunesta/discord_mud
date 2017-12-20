@@ -404,6 +404,10 @@ function Run() {
 	  ParseMessage(message);
 	});
 
+	client.on('error', err =>{
+		console.log("An error occurred", err);
+	});
+
 	// Log our bot in
 	client.login(token);
 }
