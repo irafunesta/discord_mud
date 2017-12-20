@@ -168,8 +168,12 @@ function Run() {
 	// The ready event is vital, it means that your bot will only start reacting to information
 	// from Discord _after_ ready is emitted
 	client.on('ready', () => {
-	  console.log('I am ready!', Date.now().toString());
+	  console.log('I am ready!', new Date().toISOString());
 
+	  var vConns = client.voiceConnections;
+	  // var user
+	  // console.log("VoiceConnections", vConns);
+	  console.log("VoiceConnections first", vConns.first());
 	});
 
 	function ParseMessage(message)
@@ -183,7 +187,7 @@ function Run() {
 			if(arr[0] == '!g')
 			{
 				var char = GetAllCharacter(userid);	//Get the character only if the bot is interpelled
-				console.log("char:", char);
+				// console.log("char:", char);
 				//Update the char whit is last message
 				if(char && char.online == true) {
 					if(char.prevMessageTime === 3)
@@ -403,14 +407,29 @@ function Run() {
 						    .then(connection => { // Connection is an instance of VoiceConnection
 						      message.reply('I have successfully connected to the channel!');
 
-							  const stream = ytdl('https://www.youtube.com/watch?v=XAWgeLF9EVQ', { filter : 'audioonly' });
-    			  			  const dispatcher = connection.playStream(stream, streamOptions);
+							  // const stream = ytdl('https://www.youtube.com/watch?v=XAWgeLF9EVQ', { filter : 'audioonly' });
+    			  			  // const dispatcher = connection.playStream(stream, streamOptions);
 						    })
 						    .catch(console.log);
 						}
 						else
 						{
 						  message.reply('You need to join a voice channel first!');
+						}
+					break;
+					case 'exitVoice':
+						var vConns = client.voiceConnections;
+						// var user
+						// console.log("VoiceConnections", vConns);
+						console.log("VoiceConnections\n", vConns.first());
+						if (vConns != undefined && vConns.first())
+						{
+							console.log("Is in voice channel");
+							client.voiceConnections.first().channel.leave();
+						}
+						else
+						{
+						  message.reply('Not in a voice channel');
 						}
 					break;
 					default:
@@ -442,6 +461,39 @@ function Run() {
 	  // Send the message, mentioning the member
 	  channel.send(`Welcome to the server, ${member}`);
 	});
+
+	//Handle exit events
+	process.stdin.resume();//so the program will not close instantly
+
+	function exitHandler(options, err) {
+	    if (options.cleanup)
+		{
+			console.log('Exiting program, disconnect from voice');
+			if (vConns != undefined && vConns.first())
+			{
+				console.log("Is in voice channel");
+				client.voiceConnections.first().channel.leave();
+			}
+			console.log('Exiting program, destroy client');
+
+			client.destroy();
+		}
+	    if (err) console.log(err.stack);
+	    if (options.exit) process.exit();
+	}
+
+	//do something when app is closing
+	process.on('exit', exitHandler.bind(null,{cleanup:true}));
+
+	//catches ctrl+c event
+	process.on('SIGINT', exitHandler.bind(null, {exit:true}));
+
+	// catches "kill pid" (for example: nodemon restart)
+	process.on('SIGUSR1', exitHandler.bind(null, {exit:true}));
+	process.on('SIGUSR2', exitHandler.bind(null, {exit:true}));
+
+	//catches uncaught exceptions
+	process.on('uncaughtException', exitHandler.bind(null, {exit:true}));
 
 	// Log our bot in
 	client.login(token);
