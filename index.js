@@ -181,7 +181,7 @@ function Run() {
 		try
 		{
 			//Check if asking for the simo-bot
-			var arr = message.content.split(':');
+			var arr = message.content.split(':?');
 			var userid = message.author.id;
 
 			if(arr[0] == '!g')
@@ -403,14 +403,46 @@ function Run() {
 						// Only try to join the sender's voice channel if they are in one themselves
 						if (message.member.voiceChannel)
 						{
-						  message.member.voiceChannel.join()
-						    .then(connection => { // Connection is an instance of VoiceConnection
-						      message.reply('I have successfully connected to the channel!');
+							if(arr[2])
+							{
+								var ytstram = arr[2];
+								// console.log("video :", ytstram);
+								// var lstZone = zones.count();
+								message.member.voiceChannel.join()
+								    .then(connection =>
+									{
+										// Connection is an instance of VoiceConnection
+								    	message.reply('I have successfully connected to the channel!');
+										console.log("now playing music :", ytstram);
 
-							  // const stream = ytdl('https://www.youtube.com/watch?v=XAWgeLF9EVQ', { filter : 'audioonly' });
-    			  			  // const dispatcher = connection.playStream(stream, streamOptions);
-						    })
-						    .catch(console.log);
+										const stream = ytdl(ytstram, { filter : 'audioonly' });
+		    			  				const dispatcher = connection.playStream(stream, streamOptions);
+
+										dispatcher.on('end', () =>
+										{
+										  // The song has finished
+										  console.log("Song ended");
+										});
+
+										dispatcher.on('error', e =>
+										{
+										  // Catch any errors that may arise
+										  console.log("err:", e);
+										  dispatcher.end(); // End the dispatcher, emits 'end' event
+										});
+
+									// dispatcher.setVolume(0.5); // Set the volume to 50%
+									// dispatcher.setVolume(1); // Set the volume back to 100%
+
+									// console.log(dispatcher.time); // The time in milliseconds that the stream dispatcher has been playing for
+
+									// dispatcher.pause(); // Pause the stream
+									// dispatcher.resume(); // Carry on playing
+								    }).catch(console.log);
+							}
+							else {
+								message.channel.send("The createZone command need a zone name as a parameter.");
+							}
 						}
 						else
 						{
