@@ -1,4 +1,4 @@
-//Run this in node to make a db update whitout deleting the data ?
+//Run this in node to make a db update whitout deleting the data
 
 const loki = require('lokijs');
 
@@ -25,7 +25,10 @@ function databaseInitialize() {
 
 	var i = 0;
 	for(var i in allCharacters) {
-		allCharacters[i].prevMessageTime = 3;
+		allCharacters[i].level = 0;
+		allCharacters[i].exp = 0;
+		allCharacters[i].exp_next_level = 0;
+
 		characters.update(allCharacters[i]);
 	}
 

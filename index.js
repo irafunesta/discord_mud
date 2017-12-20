@@ -5,11 +5,12 @@
 // Import the discord.js module
 const Discord = require('discord.js');
 const loki = require('lokijs');
+const config = require('./config.js');
 var msgUtils = require('./messages.js');
 // Create an instance of a Discord client
 const client = new Discord.Client();
 // The token of your bot - https://discordapp.com/developers/applications/me
-const token = 'MzgxNzk0NDM4NDE2MDM5OTM3.DPMZuA.m6brNk90VQMDHk_gMTLedJNS77k';
+const token = config.GetToken();
 
 //Lokydb
 var db = new loki('./data/game.json', {
@@ -367,7 +368,7 @@ function Run() {
 					var msg = '';
 					var commands = commandList.find({});
 
-					console.log(commands);
+					console.log("commands:" + commands);
 					if(commands){
 						commands.forEach(function(item) {
 							msg += item.name +": " + item.desc + "\n";
