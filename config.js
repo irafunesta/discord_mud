@@ -1,5 +1,5 @@
 var GetToken = function GetToken () {
-	var token = "MzgxNzk0NDM4NDE2MDM5OTM3.DRutKA.FrLOMxiCaMXI5mvn-Y5GuOz_oKw";
+	var token = "MzkyOTg0MTQ1NjIzNTE1MTM2.DRvKlw.G3vch2wTDtMUB_fgzgSRMXWFoX8";
 	return token;
 };
 
