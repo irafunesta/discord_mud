@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "description": "test for discord.js lib",
   "main": "index.js",
+  "engines": {
+    "node": "6.9.1"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack -w"
   },
   "keywords": [
     "discord",
@@ -15,6 +19,9 @@
   "license": "ISC",
   "dependencies": {
     "discord.js": "^11.2.1",
-    "nedb": "^1.8.0"
+    "fs": "0.0.1-security",
+    "lokijs": "^1.5.1",
+    "nedb": "^1.8.0",
+    "webpack": "^3.9.1"
   }
 }
