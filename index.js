@@ -181,7 +181,7 @@ function Run() {
 		try
 		{
 			//Check if asking for the simo-bot
-			var arr = message.content.split(':?');
+			var arr = message.content.split(config.command_separetor);
 			var userid = message.author.id;
 
 			if(arr[0] == '!g')
