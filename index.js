@@ -486,12 +486,18 @@ function Run() {
 	});
 
 	client.on('guildMemberAdd', member => {
-	  // Send the message to a designated channel on a server:
-	  const channel = member.guild.channels.find('name', 'member-log');
-	  // Do nothing if the channel wasn't found on this server
-	  if (!channel) return;
-	  // Send the message, mentioning the member
-	  channel.send(`Welcome to the server, ${member}`);
+		console.log("guildMemberAdd");
+		// Send the message to a designated channel on a server:
+		const channel = member.guild.channels.find('name', 'il_tamagochi_di_jackie_chan');
+		console.log("Channel: " + channel);
+		// Do nothing if the channel wasn't found on this server
+		if (!channel)
+		{
+		  console.log("channel doesn't exist");
+		  return;
+		}
+		// Send the message, mentioning the member
+		channel.send(`Welcome to the server, ${member}`);
 	});
 
 	//Handle exit events
