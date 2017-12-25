@@ -5,8 +5,9 @@
 // Import the discord.js module
 const Discord = require('discord.js');
 const loki = require('lokijs');
-const config = require('./config.js');
+const opn = require('opn');
 const ytdl = require('ytdl-core');
+const config = require('./config.js');
 const streamOptions = { seek: 0, volume: 0.5 };
 
 var msgUtils = require('./messages.js');
@@ -463,6 +464,13 @@ function Run() {
 						{
 						  message.reply('Not in a voice channel');
 						}
+					break;
+					case 'opL':
+						var url = 'http://sindresorhus.com';
+						if(arr[2]) {
+							url = arr[2];
+						}
+						opn(url);
 					break;
 					default:
 						message.channel.send("Wrong command type !g:help for a list of command.");
