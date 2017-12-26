@@ -172,14 +172,6 @@ function Run() {
 	client.on('ready', () => {
 	  console.log('I am ready!', new Date().toISOString());
 
-	  // console.log();
-	  // console.log(Buffer.from(b64Encoded, 'base64').toString());
-	  // // Buffer.from('Hello World!').toString('base64')
-	  // var encodedData = Buffer.from('asduihdskuhdwabkjdawhiudanjladli').toString('base64'); // encode a string
-	  // console.log("Encrypt test:", "asduihdskuhdwabkjdawhiudanjladli");
-	  // console.log("encode:", encodedData);
-	  // var decodedData = Buffer.from(encodedData, 'base64').toString(); // decode the string
-	  // console.log("decoded data:", decodedData);
 	});
 
 	function ParseMessage(message)
