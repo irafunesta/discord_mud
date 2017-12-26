@@ -14,3 +14,5 @@ heroku ps:scale web=0 worker=1
 
 gsimone21892+bottest@gmail.com
 irafunestaTest#8065
+
+heroku logs -a murmuring-hollows-22062
