@@ -2,6 +2,7 @@
 node_modules
 heroku
 dist
+config.js
 
 npm-debug.log
 
