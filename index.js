@@ -14,7 +14,8 @@ var msgUtils = require('./messages.js');
 // Create an instance of a Discord client
 const client = new Discord.Client();
 // The token of your bot - https://discordapp.com/developers/applications/me
-const token = config.GetToken();
+
+const token = process.env.BOTTOKEN;
 
 //Lokydb
 var db = new loki('./data/game.json', {
@@ -171,10 +172,14 @@ function Run() {
 	client.on('ready', () => {
 	  console.log('I am ready!', new Date().toISOString());
 
-	  var vConns = client.voiceConnections;
-	  // var user
-	  // console.log("VoiceConnections", vConns);
-	  console.log("VoiceConnections first", vConns.first());
+	  // console.log();
+	  // console.log(Buffer.from(b64Encoded, 'base64').toString());
+	  // // Buffer.from('Hello World!').toString('base64')
+	  // var encodedData = Buffer.from('asduihdskuhdwabkjdawhiudanjladli').toString('base64'); // encode a string
+	  // console.log("Encrypt test:", "asduihdskuhdwabkjdawhiudanjladli");
+	  // console.log("encode:", encodedData);
+	  // var decodedData = Buffer.from(encodedData, 'base64').toString(); // decode the string
+	  // console.log("decoded data:", decodedData);
 	});
 
 	function ParseMessage(message)
@@ -515,6 +520,7 @@ function Run() {
 	    if (options.cleanup)
 		{
 			console.log('Exiting program, disconnect from voice');
+			var vConns = client.voiceConnections;
 			if (vConns != undefined && vConns.first())
 			{
 				console.log("Is in voice channel");
